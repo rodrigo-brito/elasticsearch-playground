@@ -1,0 +1,67 @@
+MAPPING = PUT /blog
+
+{
+	"settings":{
+		"number_of_shards": 1,
+		"number_of_replicas":0,
+		"analysis": {
+	      "filter": {
+	        "synonym": {
+	          "type": "synonym",
+	          "synonyms": ["&,e"]
+	        }
+	      },
+	      "analyzer": {
+	        "brazilian": {
+	          "tokenizer": "standard",
+	          "filter": [
+	          		"synonym",
+					"lowercase",
+					"asciifolding"
+				]
+	        }
+	      }
+	    }
+	},
+	"mappings":{
+		"article":{
+			"properties":{
+				"title":{
+					"type": "text",
+					"analyzer": "brazilian"
+				},
+				"content":{
+					"type": "text",
+					"analyzer": "brazilian"
+				},
+				"views":{
+					"type": "integer"
+				}
+			}
+		}
+	}
+}
+
+
+ITENS = POST /_bulk
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "1" } }
+{ "title" : "o teatro mágico", "content": "banda TEATRO mágico", "views": 10 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "2" } }
+{ "title" : "MÁGICO", "content": "banda TEATRO", "views": 10 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "3" } }
+{ "title" : "o mágico mágico", "content": "banda TEATRO mágico", "views": 10 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "4" } }
+{ "title" : "teatro & mágico", "content": "banda TEATRO & mágico", "views": 10 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "5" } }
+{ "title" : "teatro e mágico", "content": "TEATRO e mágico", "views": 10 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "6" } }
+{ "title" : "ma", "content": "te", "views": 10 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "7" } }
+{ "title" : "teatro vampiros", "content": "téatro", "views": 10 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "8" } }
+{ "title" : "atro", "content": "ico", "views": 10 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "9" } }
+{ "title" : "teatro", "content": "teatro mazico", "views": 9 }
+{ "create" : { "_index" : "blog", "_type" : "article", "_id" : "10" } }
+{ "title" : "zzzz", "content": "zzz teatro magico", "views": 10 }
+
