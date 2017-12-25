@@ -23,3 +23,11 @@
 [[constraint]]
   branch = "master"
   name = "github.com/golang/glog"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/drhodes/golorem"
+
+[[constraint]]
+  name = "github.com/spf13/viper"
+  version = "1.0.0"

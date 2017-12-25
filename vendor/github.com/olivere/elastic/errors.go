@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/y0ssar1an/q"
 )
 
 // checkResponse will return an error if the request/response indicates
@@ -84,7 +82,6 @@ type ErrorDetails struct {
 
 // Error returns a string representation of the error.
 func (e *Error) Error() string {
-	q.Q(e.Details)
 	if e.Details != nil && e.Details.Reason != "" {
 		return fmt.Sprintf("elastic: Error %d (%s): %s [type=%s]", e.Status, http.StatusText(e.Status), e.Details.Reason, e.Details.Type)
 	} else {
