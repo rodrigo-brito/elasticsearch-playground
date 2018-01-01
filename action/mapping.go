@@ -3,12 +3,13 @@ package action
 import (
 	"context"
 
+	"fmt"
 	"github.com/olivere/elastic"
+	"github.com/spf13/viper"
 )
 
-const indexName = "britoflix"
-
 func CreateIndex(ctx context.Context, client *elastic.Client) error {
+	indexName := viper.GetString("indexName")
 	mapping := `{
 		"settings":{
 			"number_of_shards":1,
@@ -16,10 +17,21 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 			"analysis":{
 				"analyzer":{
 					"brazilian":{
-						"tokenizer":"standard",
+						"tokenizer":"ngran_tokenizer",
 						"filter":[
 							"lowercase",
 							"asciifolding"
+						]
+					}
+				},
+				"tokenizer": {
+					"ngran_tokenizer": {
+						"type": "ngram",
+						"min_gram": 1,
+						"max_gram": 3,
+						"token_chars": [
+							"letter",
+							"digit"
 						]
 					}
 				}
@@ -35,23 +47,34 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 						"type":"text",
 						"analyzer": "brazilian"
 					},
-					"category":{
+					"theme":{
 						"type":"text",
-						"analyzer": "brazilian" 
+						"analyzer": "brazilian"
+					},
+					"director":{
+						"type":"text",
+						"analyzer": "brazilian"
+					},
+					"year":{
+						"type":"text"
 					}
 				}
 			}
 		}
 	}`
 
-	ok, err := client.IndexExists(indexName).Do(ctx)
-	if err != nil {
+	if ok, err := client.IndexExists(indexName).Do(ctx); err != nil {
 		return err
-	}
-	if ok {
+	} else if ok {
+		fmt.Println("Index already exists")
 		return nil
-
 	}
-	_, err = client.CreateIndex(indexName).BodyString(mapping).Do(ctx)
-	return err
+
+	if result, err := client.CreateIndex(indexName).BodyString(mapping).Do(ctx); err != nil {
+		return err
+	} else if result.Acknowledged {
+		fmt.Println("Index created...")
+	}
+
+	return InsertFakeData(ctx)
 }

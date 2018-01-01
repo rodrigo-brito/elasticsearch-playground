@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/gocarina/gocsv"
+  packages = ["."]
+  revision = "a7422e75c1caf4c04c1b413ad1cd857d3eebb85c"
+
+[[projects]]
+  branch = "master"
   name = "github.com/golang/glog"
   packages = ["."]
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
@@ -106,6 +112,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b91e00770f1363e1199224149733c885fa209d7a32e0fa17deb545c830d71b2f"
+  inputs-digest = "60f37cdbdaa6385e1b4800912a6436bb27ca463e7a8d5a4980a2115e7564cfb6"
   solver-name = "gps-cdcl"
   solver-version = 1

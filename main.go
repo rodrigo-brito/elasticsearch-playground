@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/golang/glog"
+
 	"github.com/rodrigo-brito/elasticsearch-playground/action"
 	_ "github.com/rodrigo-brito/elasticsearch-playground/conf"
 	handle "github.com/rodrigo-brito/elasticsearch-playground/http"
-
-	"github.com/golang/glog"
 )
 
 func main() {

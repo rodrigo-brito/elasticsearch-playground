@@ -21,15 +21,28 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	search := elastic.NewMultiMatchQuery(r.URL.Query().Get("q"), "title", "content").
-		Operator("AND").       //Should match all terms
-		Type("phrase_prefix"). //Find by prefix
-		Slop(5)                //Max difference of terms's order
+	term := r.URL.Query().Get("q")
+
+	termQuery := elastic.NewMultiMatchQuery(term, "title^1.5", "theme", "director").
+		Operator("OR").
+		Type("most_fields").
+		Fuzziness("AUTO").
+		CutoffFrequency(0.0001).
+		Slop(5)
+
+	exactMatch := elastic.NewMultiMatchQuery(term, "title^1.5", "theme", "director").
+		Operator("AND").
+		Type("phrase_prefix").
+		Slop(5)
+
+	query := elastic.NewDisMaxQuery().
+		Query(exactMatch, termQuery).
+		TieBreaker(1.1)
 
 	result, err := client.Search().
 		Index(viper.GetString("indexName")).
-		Type("movie").
-		Query(search).
+		Type("movies").
+		Query(query).
 		Pretty(true).
 		Do(context.Background())
 
