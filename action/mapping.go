@@ -17,7 +17,7 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 			"analysis":{
 				"analyzer":{
 					"brazilian":{
-						"tokenizer":"ngran_tokenizer",
+						"tokenizer":"standard",
 						"filter":[
 							"lowercase",
 							"asciifolding"
@@ -54,6 +54,9 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 					"director":{
 						"type":"text",
 						"analyzer": "brazilian"
+					},
+					"views":{
+						"type":"integer"
 					},
 					"year":{
 						"type":"text"

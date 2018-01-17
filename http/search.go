@@ -9,9 +9,15 @@ import (
 
 	"github.com/rodrigo-brito/elasticsearch-playground/action"
 
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/olivere/elastic"
+	"strings"
 )
+
+func getFuzzyTerm(term string) string {
+	return fmt.Sprintf("%s~AUTO", strings.Join(strings.Split(term, " "), "~AUTO "))
+}
 
 func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	client, err := action.GetConnection()
@@ -23,21 +29,13 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 
 	term := r.URL.Query().Get("q")
 
-	termQuery := elastic.NewMultiMatchQuery(term, "title^1.5", "theme", "director").
-		Operator("OR").
-		Type("most_fields").
-		Fuzziness("AUTO").
-		CutoffFrequency(0.0001).
-		Slop(5)
-
-	exactMatch := elastic.NewMultiMatchQuery(term, "title^1.5", "theme", "director").
-		Operator("AND").
-		Type("phrase_prefix").
-		Slop(5)
-
-	query := elastic.NewDisMaxQuery().
-		Query(exactMatch, termQuery).
-		TieBreaker(1.1)
+	query := elastic.NewQueryStringQuery(getFuzzyTerm(term)).
+		FieldWithBoost("title", 2).
+		FieldWithBoost("theme", 1).
+		FieldWithBoost("director", 1).
+		AnalyzeWildcard(true).
+		DefaultOperator("AND").
+		UseDisMax(true)
 
 	result, err := client.Search().
 		Index(viper.GetString("indexName")).

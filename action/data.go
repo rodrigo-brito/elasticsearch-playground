@@ -8,6 +8,7 @@ import (
 	"github.com/gocarina/gocsv"
 	"github.com/olivere/elastic"
 	"github.com/spf13/viper"
+	"math/rand"
 	"strconv"
 )
 
@@ -17,6 +18,7 @@ type MovieElastic struct {
 	Theme    string `json:"theme"`
 	Director string `json:"director"`
 	Year     string `json:"year"`
+	Views    int    `json:"views"`
 }
 
 func newMovieElastic(m *MovieCSV) *MovieElastic {
@@ -26,6 +28,7 @@ func newMovieElastic(m *MovieCSV) *MovieElastic {
 		Theme:    m.Theme,
 		Director: m.Director,
 		Year:     m.Year,
+		Views:    rand.Intn(10000), // Fake views number
 	}
 }
 
