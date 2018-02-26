@@ -1,26 +1,23 @@
 package http
 
 import (
-	"context"
 	"encoding/json"
-	"net/http"
-
-	"github.com/spf13/viper"
-
-	"github.com/rodrigo-brito/elasticsearch-playground/action"
-
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/golang/glog"
 	"github.com/olivere/elastic"
-	"strings"
+	"github.com/rodrigo-brito/elasticsearch-playground/action/elasticsearch"
+	"github.com/spf13/viper"
 )
 
 func getFuzzyTerm(term string) string {
 	return fmt.Sprintf("%s~AUTO", strings.Join(strings.Split(term, " "), "~AUTO "))
 }
 
-func HandleSearch(w http.ResponseWriter, r *http.Request) {
-	client, err := action.GetConnection()
+func QueryStringWithSlplit(w http.ResponseWriter, r *http.Request) {
+	client, err := elasticsearch.GetConnection()
 	if err != nil {
 		glog.Error(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -42,7 +39,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 		Type("movies").
 		Query(query).
 		Pretty(true).
-		Do(context.Background())
+		Do(r.Context())
 
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)

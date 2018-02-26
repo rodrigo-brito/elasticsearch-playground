@@ -8,24 +8,50 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/rodrigo-brito/elasticsearch-playground/action"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/olivere/elastic"
+	"github.com/rodrigo-brito/elasticsearch-playground/action/elasticsearch"
 	_ "github.com/rodrigo-brito/elasticsearch-playground/conf"
 	handle "github.com/rodrigo-brito/elasticsearch-playground/http"
 )
 
-func main() {
-	ctx := context.Background()
+type Project struct {
+	ctx           context.Context
+	osSignal      chan os.Signal
+	elasticClient *elastic.Client
+}
 
-	client, err := action.GetConnection()
+func (p *Project) Init(ctx context.Context) {
+	client, err := elasticsearch.GetConnection()
 	if err != nil {
 		glog.Fatal(err)
 	}
 
-	if err := action.CreateIndex(ctx, client); err != nil {
+	if err := elasticsearch.CreateIndex(ctx, client); err != nil {
 		glog.Fatal(err)
 	}
-	http.HandleFunc("/elastic", handle.HandleSearch)
+	http.HandleFunc("/v1", handle.QueryStringWithSlplit)
+	http.HandleFunc("/v2", handle.MultiMatchNgran)
+	http.HandleFunc("/v3", handle.MultiMatchPrefix)
+	http.HandleFunc("/v4", handle.MultiMatchPrefixShingle)
+
+	p.osSignal = make(chan os.Signal, 2)
+	signal.Notify(p.osSignal, os.Interrupt, syscall.SIGTERM)
+	go p.close()
 
 	fmt.Println("Server started at localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func (p *Project) close() {
+	<-p.osSignal
+	fmt.Println("Killing gracefully... :)")
+}
+
+func main() {
+	project := new(Project)
+	project.Init(context.Background())
 }

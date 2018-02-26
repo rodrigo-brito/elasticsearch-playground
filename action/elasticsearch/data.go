@@ -1,34 +1,46 @@
-package action
+package elasticsearch
 
 import (
 	"context"
-	"os"
-
 	"fmt"
+	"math/rand"
+	"os"
+	"strconv"
+
 	"github.com/gocarina/gocsv"
 	"github.com/olivere/elastic"
 	"github.com/spf13/viper"
-	"math/rand"
-	"strconv"
 )
 
 type MovieElastic struct {
-	ID       int    `json:"id"`
-	Title    string `json:"title"`
-	Theme    string `json:"theme"`
-	Director string `json:"director"`
-	Year     string `json:"year"`
-	Views    int    `json:"views"`
+	ID                 int    `json:"id"`
+	Title              string `json:"title"`
+	TitleNgran         string `json:"title_ngran"`
+	TitleShingle       string `json:"title_shingle"`
+	Theme              string `json:"theme"`
+	Director           string `json:"director"`
+	DirectorNgran      string `json:"director_ngran"`
+	DirectorShingle    string `json:"director_shingle"`
+	TitleDirector      string `json:"title_director"`
+	TitleDirectorNgran string `json:"title_director_ngran"`
+	Year               string `json:"year"`
+	Views              int    `json:"views"`
 }
 
 func newMovieElastic(m *MovieCSV) *MovieElastic {
 	return &MovieElastic{
-		ID:       m.ID,
-		Title:    m.Title,
-		Theme:    m.Theme,
-		Director: m.Director,
-		Year:     m.Year,
-		Views:    rand.Intn(10000), // Fake views number
+		ID:                 m.ID,
+		Title:              m.Title,
+		TitleNgran:         m.Title,
+		TitleShingle:       m.Title,
+		Theme:              m.Theme,
+		Director:           m.Director,
+		DirectorNgran:      m.Director,
+		DirectorShingle:    m.Director,
+		TitleDirector:      m.Title + " " + m.Director,
+		TitleDirectorNgran: m.Title + " " + m.Director,
+		Year:               m.Year,
+		Views:              rand.Intn(10000), // Fake views number
 	}
 }
 
@@ -48,7 +60,7 @@ func InsertFakeData(ctx context.Context) error {
 	}
 	defer clientsFile.Close()
 
-	movies := []*MovieCSV{}
+	var movies []*MovieCSV
 
 	if err := gocsv.UnmarshalFile(clientsFile, &movies); err != nil {
 		return err
