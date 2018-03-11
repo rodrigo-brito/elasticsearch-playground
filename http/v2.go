@@ -26,12 +26,12 @@ func MultiMatchNgran(w http.ResponseWriter, r *http.Request) {
 	for _, term := range terms {
 		match := elastic.NewMultiMatchQuery(term).
 			FieldWithBoost("title", 2).
-			FieldWithBoost("title_ngran", 2).
+			FieldWithBoost("title_ngram", 2).
 			FieldWithBoost("theme", 1).
 			FieldWithBoost("director", 1).
-			FieldWithBoost("director_ngran", 1).
+			FieldWithBoost("director_ngram", 1).
 			FieldWithBoost("title_director", 1).
-			FieldWithBoost("title_director_ngran", 1).
+			FieldWithBoost("title_director_ngram", 1).
 			Fuzziness("AUTO")
 		matchQueries = append(matchQueries, match)
 	}

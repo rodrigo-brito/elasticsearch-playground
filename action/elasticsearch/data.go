@@ -15,14 +15,14 @@ import (
 type MovieElastic struct {
 	ID                 int    `json:"id"`
 	Title              string `json:"title"`
-	TitleNgran         string `json:"title_ngran"`
+	TitleNgran         string `json:"title_ngram"`
 	TitleShingle       string `json:"title_shingle"`
 	Theme              string `json:"theme"`
 	Director           string `json:"director"`
-	DirectorNgran      string `json:"director_ngran"`
+	DirectorNgran      string `json:"director_ngram"`
 	DirectorShingle    string `json:"director_shingle"`
 	TitleDirector      string `json:"title_director"`
-	TitleDirectorNgran string `json:"title_director_ngran"`
+	TitleDirectorNgran string `json:"title_director_ngram"`
 	Year               string `json:"year"`
 	Views              int    `json:"views"`
 }

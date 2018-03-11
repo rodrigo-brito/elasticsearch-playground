@@ -23,8 +23,8 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 							"asciifolding"
 						]
 					},
-					"brazilian_ngran":{
-						"tokenizer":"ngran_tokenizer",
+					"brazilian_ngram":{
+						"tokenizer":"ngram_tokenizer",
 						"filter":[
 							"lowercase",
 							"asciifolding"
@@ -40,10 +40,10 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 					}
 				},
 				"tokenizer": {
-					"ngran_tokenizer": {
-						"type": "ngram",
-						"min_gram": 3,
-						"max_gram": 10,
+					"ngram_tokenizer": {
+						"type": "edge_ngram",
+						"min_gram": 1,
+						"max_gram": 20,
 						"token_chars": [
 							"letter",
 							"digit"
@@ -71,10 +71,10 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 						"type":"text",
 						"analyzer": "brazilian"
 					},
-					"title_ngran":{
+					"title_ngram":{
 						"type":"text",
-						"analyzer": "brazilian_ngran",
-						"search_analyzer": "brazilian_ngran"
+						"analyzer": "brazilian_ngram",
+						"search_analyzer": "brazilian_ngram"
 					},
 					"title_shingle":{
 						"type":"text",
@@ -89,10 +89,10 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 						"type":"text",
 						"analyzer": "brazilian"
 					},
-					"director_ngran":{
+					"director_ngram":{
 						"type":"text",
-						"analyzer": "brazilian_ngran",
-						"search_analyzer": "brazilian_ngran"
+						"analyzer": "brazilian_ngram",
+						"search_analyzer": "brazilian_ngram"
 					},
 					"director_shingle":{
 						"type":"text",
@@ -103,10 +103,10 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 						"type":"text",
 						"analyzer": "brazilian"
 					},
-					"title_director_ngran":{
+					"title_director_ngram":{
 						"type":"text",
-						"analyzer": "brazilian_ngran",
-						"search_analyzer": "brazilian_ngran"
+						"analyzer": "brazilian_ngram",
+						"search_analyzer": "brazilian_ngram"
 					},
 					"views":{
 						"type":"integer"

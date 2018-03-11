@@ -37,6 +37,7 @@ func (p *Project) Init(ctx context.Context) {
 	http.HandleFunc("/v2", handle.MultiMatchNgran)
 	http.HandleFunc("/v3", handle.MultiMatchPrefix)
 	http.HandleFunc("/v4", handle.MultiMatchPrefixShingle)
+	http.HandleFunc("/v5", handle.PrefixPhraseNgran)
 
 	p.osSignal = make(chan os.Signal, 2)
 	signal.Notify(p.osSignal, os.Interrupt, syscall.SIGTERM)

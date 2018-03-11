@@ -43,7 +43,7 @@ func MultiMatchPrefix(w http.ResponseWriter, r *http.Request) {
 	matchQueries = append(matchQueries, prefix)
 
 	source := elastic.NewFetchSourceContext(true).
-		Exclude("*_ngran")
+		Exclude("*_ngram")
 
 	boolQuery := elastic.NewBoolQuery().Must(matchQueries...)
 
