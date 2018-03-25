@@ -12,7 +12,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-type MovieElastic struct {
+type Artist struct {
+	ID    int64  `csv:"id" json:"id"`
+	Name  string `csv:"name" json:"name"`
+	Genre string `csv:"genre" json:"genre"`
+	Plays int64  `csv:"plays" json:"plays"`
+}
+
+type Movie struct {
 	ID                 int    `json:"id"`
 	Title              string `json:"title"`
 	TitleNgran         string `json:"title_ngram"`
@@ -27,8 +34,8 @@ type MovieElastic struct {
 	Views              int    `json:"views"`
 }
 
-func newMovieElastic(m *MovieCSV) *MovieElastic {
-	return &MovieElastic{
+func newMovieElastic(m *MovieCSV) *Movie {
+	return &Movie{
 		ID:                 m.ID,
 		Title:              m.Title,
 		TitleNgran:         m.Title,
@@ -54,17 +61,30 @@ type MovieCSV struct {
 }
 
 func InsertFakeData(ctx context.Context) error {
-	clientsFile, err := os.OpenFile("data/movies-pt.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	moviesFile, err := os.OpenFile("data/movies-pt.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return err
 	}
-	defer clientsFile.Close()
+	defer moviesFile.Close()
 
 	var movies []*MovieCSV
 
-	if err := gocsv.UnmarshalFile(clientsFile, &movies); err != nil {
+	if err := gocsv.UnmarshalFile(moviesFile, &movies); err != nil {
 		return err
 	}
+
+	var artists []*Artist
+
+	artistFile, err := os.OpenFile("data/artists-pt.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	if err := gocsv.UnmarshalFile(artistFile, &artists); err != nil {
+		return err
+	}
+
+	fmt.Println(artists[0])
 
 	client, err := GetConnection()
 	if err != nil {
@@ -72,6 +92,7 @@ func InsertFakeData(ctx context.Context) error {
 	}
 
 	fmt.Printf("Inserting %d movies for tests...\n", len(movies))
+	fmt.Printf("Inserting %d artists for tests...\n", len(artists))
 
 	bulk := client.Bulk()
 	for index, movie := range movies {
@@ -80,6 +101,15 @@ func InsertFakeData(ctx context.Context) error {
 			Type("movies").
 			Id(strconv.Itoa(index)).
 			Doc(newMovieElastic(movie))
+		bulk = bulk.Add(entry)
+	}
+
+	for index, artist := range artists {
+		entry := elastic.NewBulkIndexRequest().
+			Index(viper.GetString("indexName")).
+			Type("artists").
+			Id(strconv.Itoa(index)).
+			Doc(artist)
 		bulk = bulk.Add(entry)
 	}
 	fmt.Printf("Bulk actions = %d\n", bulk.NumberOfActions())

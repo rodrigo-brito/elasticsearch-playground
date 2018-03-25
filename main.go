@@ -2,20 +2,17 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
-
-	"github.com/golang/glog"
-
 	"os"
-	"os/signal"
-	"syscall"
 
+	"github.com/go-chi/chi"
+	"github.com/golang/glog"
 	"github.com/olivere/elastic"
+
 	"github.com/rodrigo-brito/elasticsearch-playground/action/elasticsearch"
 	_ "github.com/rodrigo-brito/elasticsearch-playground/conf"
-	handle "github.com/rodrigo-brito/elasticsearch-playground/http"
+	"github.com/rodrigo-brito/elasticsearch-playground/handler/artists"
+	"github.com/rodrigo-brito/elasticsearch-playground/handler/movies"
 )
 
 type Project struct {
@@ -33,23 +30,22 @@ func (p *Project) Init(ctx context.Context) {
 	if err := elasticsearch.CreateIndex(ctx, client); err != nil {
 		glog.Fatal(err)
 	}
-	http.HandleFunc("/v1", handle.QueryStringWithSlplit)
-	http.HandleFunc("/v2", handle.MultiMatchNgran)
-	http.HandleFunc("/v3", handle.MultiMatchPrefix)
-	http.HandleFunc("/v4", handle.MultiMatchPrefixShingle)
-	http.HandleFunc("/v5", handle.PrefixPhraseNgran)
 
-	p.osSignal = make(chan os.Signal, 2)
-	signal.Notify(p.osSignal, os.Interrupt, syscall.SIGTERM)
-	go p.close()
+	r := chi.NewRouter()
 
-	fmt.Println("Server started at localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
+	r.Route("/artist", func(r chi.Router) {
+		r.Get("/v1", artists.SearchHandler)
+	})
 
-func (p *Project) close() {
-	<-p.osSignal
-	fmt.Println("Killing gracefully... :)")
+	r.Route("/movies", func(r chi.Router) {
+		r.Get("/v1", movies.QueryStringWithSlplit)
+		r.Get("/v2", movies.MultiMatchNgran)
+		r.Get("/v3", movies.MultiMatchPrefix)
+		r.Get("/v4", movies.MultiMatchPrefixShingle)
+		r.Get("/v5", movies.PrefixPhraseNgran)
+	})
+
+	http.ListenAndServe(":3000", r)
 }
 
 func main() {

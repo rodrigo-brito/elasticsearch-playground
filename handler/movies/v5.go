@@ -1,7 +1,8 @@
-package http
+package movies
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -16,13 +17,19 @@ var re *regexp.Regexp
 
 func init() {
 	var err error
-	re, err = regexp.Compile(`\+\-\=&\|\>\<\!\(\)\{\}\[\]\^"~\*\?\:/`)
+	re, err = regexp.Compile(`[\+\-\=&\|\>\<\!\(\)\{\}\[\]\^"~\*\?\:/]`)
 	if err != nil {
 		glog.Error(err)
 	}
 }
+
 func scapeQueryString(term string) string {
 	return re.ReplaceAllString(term, "")
+}
+
+func injectFuzzySufix(term string) string {
+	terms := strings.Split(strings.TrimSpace(scapeQueryString(term)), " ")
+	return fmt.Sprintf("%s~AUTO*", strings.Join(terms, "~AUTO "))
 }
 
 func PrefixPhraseNgran(w http.ResponseWriter, r *http.Request) {
@@ -37,33 +44,34 @@ func PrefixPhraseNgran(w http.ResponseWriter, r *http.Request) {
 
 	term := r.URL.Query().Get("q")
 
-	terms := strings.Split(term, " ")
-	var queries []elastic.Query
-	for _, term := range terms[:len(terms)-1] {
-		queries = append(queries, elastic.NewMultiMatchQuery(term).
-			FieldWithBoost("title_director_ngram", 2).
-			Fuzziness("AUTO").
-			MaxExpansions(20).
-			MinimumShouldMatch(minimumMatch))
-	}
-
-	prefixQuery := elastic.NewQueryStringQuery(
-		scapeQueryString(terms[len(terms)-1])+"~AUTO").
+	prefixExact := elastic.NewQueryStringQuery(fmt.Sprintf("%s*", scapeQueryString(term))).
 		MinimumShouldMatch(minimumMatch).
 		AnalyzeWildcard(true).
-		FieldWithBoost("title_director_ngram", 1)
-	queries = append(queries, prefixQuery)
+		FieldWithBoost("title_director_ngram", 1).
+		Analyzer("standard")
 
-	boolQuery := elastic.NewBoolQuery().Must(
-		queries...,
-	)
+	prefixWithFuzzy := elastic.NewQueryStringQuery(injectFuzzySufix(term)).
+		MinimumShouldMatch(minimumMatch).
+		AnalyzeWildcard(true).
+		FieldWithBoost("title_director_ngram", 1).
+		Analyzer("standard")
+
+	query := elastic.NewDisMaxQuery().
+		Query(
+			prefixExact.Boost(3),
+			prefixWithFuzzy.Boost(1),
+		).TieBreaker(0.1)
+
+	source := elastic.NewFetchSourceContext(true).
+		Exclude("*_ngram")
 
 	result, err := client.Search().
 		Index(viper.GetString("indexName")).
 		Type("movies").
-		Query(boolQuery).
+		Query(query).
 		Pretty(true).
 		TrackScores(true).
+		FetchSourceContext(source).
 		Do(r.Context())
 
 	if err != nil {

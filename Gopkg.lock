@@ -8,6 +8,12 @@
   version = "v1.4.2"
 
 [[projects]]
+  name = "github.com/go-chi/chi"
+  packages = ["."]
+  revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
+  version = "v3.3.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/gocarina/gocsv"
   packages = ["."]
@@ -112,6 +118,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "60f37cdbdaa6385e1b4800912a6436bb27ca463e7a8d5a4980a2115e7564cfb6"
+  inputs-digest = "62c170822c0734fb406e6b357007e78c88a2c2adda950b6d16f454efc9211cc9"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -1,8 +1,7 @@
-package http
+package movies
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -12,11 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func getFuzzyTerm(term string) string {
-	return fmt.Sprintf("%s~AUTO", strings.Join(strings.Split(term, " "), "~AUTO "))
-}
-
-func QueryStringWithSlplit(w http.ResponseWriter, r *http.Request) {
+func MultiMatchPrefix(w http.ResponseWriter, r *http.Request) {
 	client, err := elasticsearch.GetConnection()
 	if err != nil {
 		glog.Error(err)
@@ -25,20 +20,39 @@ func QueryStringWithSlplit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	term := r.URL.Query().Get("q")
+	terms := strings.Split(term, " ")
 
-	query := elastic.NewQueryStringQuery(getFuzzyTerm(term)).
+	termsCount := len(terms)
+	var matchQueries []elastic.Query
+	for i := 0; i < termsCount-1; i++ {
+		match := elastic.NewMultiMatchQuery(terms[i]).
+			FieldWithBoost("title", 2).
+			FieldWithBoost("theme", 1).
+			FieldWithBoost("director", 2).
+			FieldWithBoost("title_director", 1).
+			Fuzziness("AUTO")
+		matchQueries = append(matchQueries, match)
+	}
+
+	prefix := elastic.NewQueryStringQuery(terms[termsCount-1]+"~AUTO*").
 		FieldWithBoost("title", 2).
 		FieldWithBoost("theme", 1).
-		FieldWithBoost("director", 1).
-		AnalyzeWildcard(true).
-		DefaultOperator("AND").
-		UseDisMax(true)
+		FieldWithBoost("director", 2).
+		FieldWithBoost("title_director", 1)
+
+	matchQueries = append(matchQueries, prefix)
+
+	source := elastic.NewFetchSourceContext(true).
+		Exclude("*_ngram")
+
+	boolQuery := elastic.NewBoolQuery().Must(matchQueries...)
 
 	result, err := client.Search().
 		Index(viper.GetString("indexName")).
 		Type("movies").
-		Query(query).
+		Query(boolQuery).
 		Pretty(true).
+		FetchSourceContext(source).
 		Do(r.Context())
 
 	if err != nil {

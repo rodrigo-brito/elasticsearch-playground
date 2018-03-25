@@ -27,7 +27,8 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 						"tokenizer":"ngram_tokenizer",
 						"filter":[
 							"lowercase",
-							"asciifolding"
+							"asciifolding",
+							"word_joiner"
 						]
 					},
 					"brazilian_shingle":{
@@ -36,6 +37,14 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 							"lowercase",
 							"asciifolding",
 							"filter_shingle"
+						]
+					},
+					"search_analyzer":{
+						"tokenizer":"standard",
+						"filter":[
+							"lowercase",
+							"asciifolding",
+							"word_joiner"
 						]
 					}
 				},
@@ -51,17 +60,43 @@ func CreateIndex(ctx context.Context, client *elastic.Client) error {
 					}
 				},
 				"filter":{
-				   "filter_shingle":{
+					"filter_shingle":{
 						"type":"shingle",
-						"max_shingle_size": 3,
+						"max_shingle_size": 2,
 						"min_shingle_size": 2,
-						"output_unigrams": "true",
+						"output_unigrams": "false",
 						"token_separator": ""
-				   }
+					},
+					"word_joiner": {
+						"type": "word_delimiter",
+						"catenate_all": true
+					}
 				}
 			}
 		},
 		"mappings":{
+			"artists": {
+				"properties":{
+					"id":{
+						"type": "integer"
+					},
+					"name":{
+						"type": "text",
+						"analyzer": "brazilian"
+					},
+					"name_shingle":{
+						"type": "text",
+						"analyzer": "brazilian_shingle"
+					},
+					"genre":{
+						"type":"text",
+						"analyzer": "brazilian"
+					},
+					"plays":{
+						"type": "integer" 
+					}
+				}
+			},
 			"movies":{
 				"properties":{
 					"id":{

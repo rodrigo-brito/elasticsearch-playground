@@ -1,8 +1,9 @@
-package http
+package movies
 
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/olivere/elastic"
@@ -10,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func MultiMatchPrefixShingle(w http.ResponseWriter, r *http.Request) {
+func MultiMatchNgran(w http.ResponseWriter, r *http.Request) {
 	client, err := elasticsearch.GetConnection()
 	if err != nil {
 		glog.Error(err)
@@ -19,19 +20,27 @@ func MultiMatchPrefixShingle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	term := r.URL.Query().Get("q")
+	terms := strings.Split(term, " ")
 
-	query := elastic.NewQueryStringQuery(getFuzzyTerm(term)).
-		FieldWithBoost("title_shingle", 2).
-		FieldWithBoost("theme", 1).
-		FieldWithBoost("director_shingle", 1).
-		AnalyzeWildcard(true).
-		DefaultOperator("AND").
-		UseDisMax(true)
+	var matchQueries []elastic.Query
+	for _, term := range terms {
+		match := elastic.NewMultiMatchQuery(term).
+			FieldWithBoost("title", 2).
+			FieldWithBoost("title_ngram", 2).
+			FieldWithBoost("theme", 1).
+			FieldWithBoost("director", 1).
+			FieldWithBoost("director_ngram", 1).
+			FieldWithBoost("title_director", 1).
+			FieldWithBoost("title_director_ngram", 1).
+			Fuzziness("AUTO")
+		matchQueries = append(matchQueries, match)
+	}
+	disMax := elastic.NewDisMaxQuery().Query(matchQueries...).TieBreaker(0)
 
 	result, err := client.Search().
 		Index(viper.GetString("indexName")).
 		Type("movies").
-		Query(query).
+		Query(disMax).
 		Pretty(true).
 		Do(r.Context())
 
